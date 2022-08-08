@@ -33,3 +33,30 @@ exports.getSingleMovie = (req, res, next) => {
 		throw error;
 	})
 };
+
+exports.createMovie = (req, res, next) => {
+	console.log(req.file);
+	const { title, description } = req.body;
+	const coverUrl = req.file?.path.replace("\\", "/"); 
+	if(!coverUrl) {
+		const error = new Error("No cover url provided!");
+		error.statusCode = 401;
+		throw error;
+	}
+	
+	const movie = new Movie({
+		title: title,
+		description: description,
+		coverUrl: coverUrl,
+		creator: { name: "MORA" }
+	});
+	movie.save()
+	.then(result => {
+		res.status(201).json({ message: "Created successfully!", data: result });
+	})
+	.catch(error => {
+		error.message = null;
+		error.statusCode = 500;
+		throw error;
+	});
+};

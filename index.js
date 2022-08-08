@@ -1,8 +1,30 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const multer = require("multer");
 const moviesRoutes = require("./routes/moviesRoutes");
 
 const app = express();
+
+app.use((req, res, next) => {
+	res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader("Access-Control-Allow-Methods", "*");
+	res.setHeader("Access-Control-Allow-Headers", "*");
+	next();
+});
+
+const storageConfig = multer.diskStorage({
+	filename: (req, file, cb) => {
+		cb(null, Math.random().toString());
+	},
+	
+	destination: (req, file, cb) => {
+		cb(null, "images");
+	}
+});
+
+app.use("/images", express.static("images"));
+app.use(express.json());
+app.use(multer({ storage: storageConfig }).single("coverImage"));
 
 app.use("/movies", moviesRoutes);
 
