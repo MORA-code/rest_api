@@ -1,3 +1,4 @@
+const fs = require("fs");
 const mongoose = require("mongoose");
 const Movie = require("../models/movie");
 
@@ -95,3 +96,44 @@ exports.deleteMovie = (req, res, next) => {
 		throw error;
 	});
 };
+
+function clearPreviousCover(url) {
+	fs.unlink(url, (error) => console.log(error));
+}
+
+exports.editMovie = (req, res, next) => {
+	const movieId = req.params.movieId;
+	const { title: updatedTitle, description: updatedDescription } = req.body;
+	const coverUrl = req.file?.path.replace("\\", "/");
+	
+	try {
+		new mongoose.Types.ObjectId(movieId);
+	} catch(error) {
+		error.statusCode = 404;
+		error.message = 'Invalid type of movie id!';
+		throw error;
+	}
+	
+	let movieDoc;
+	Movie.findById(movieId)
+	.then(movie => {
+		movieDoc = movie;
+		movie.title = updatedTitle ?? movie.title;
+		movie.description = updatedDescription ?? movie.description;
+		
+		if(coverUrl) {
+			clearPreviousCover(movie.coverUrl);
+			movie.coverUrl = coverUrl;
+		}
+		
+		return movie.save();
+	})
+	.then(result => {
+		res.status(200).json({
+			message: "Movie got updated successfully!",
+			updatedMovieId: movieDoc._id
+		});
+	}).catch(error => {
+		throw error;
+	})
+}; 
