@@ -15,7 +15,11 @@ app.use((req, res, next) => {
 
 const storageConfig = multer.diskStorage({
 	filename: (req, file, cb) => {
-		cb(null, Math.random().toString());
+		const filename = 
+			Math.random().toString() + "-" +
+			file.originalname;
+			
+		cb(null, filename);
 	},
 	
 	destination: (req, file, cb) => {
@@ -35,6 +39,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
+	console.log(error);
 	res.status(error.statusCode ?? 500)
 		.json({ message: error.message ?? "Internal Server Error!" });
 });

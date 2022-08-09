@@ -58,11 +58,12 @@ exports.createMovie = (req, res, next) => {
 		return next(error);
 	}
 	
+	
 	const movie = new Movie({
 		title: title,
 		description: description,
 		coverUrl: coverUrl,
-		creator: { name: "MORA" }
+		creator: req.userId
 	});
 	movie.save()
 	.then(result => {
@@ -87,6 +88,12 @@ exports.deleteMovie = (req, res, next) => {
 	
 	Movie.findById(movieId)
 	.then(movie => {
+		if(movie.creator._id.toString() !== req.userId.toString()) {
+			const error = new Error("Not authorized!");
+			error.statusCode = 403;
+			return next(error);
+		}
+		
 		if(!movie) {
 			const error = new Error("Movie with the given id not found!");
 			error.statusCode = 404;
@@ -109,9 +116,11 @@ function clearPreviousCover(url) {
 }
 
 exports.editMovie = (req, res, next) => {
+	
 	const errors = validationResult(req);
-	if(!errors.isEmpty()) {
-		const error = new Error({ message: errors.array() });
+	if(!errors.isEmpty() && req.body.title && req.body.description) {
+		const error = new Error();
+		error.message = errors.array();
 		error.statusCode = 422;
 		return next(error);
 	}
@@ -131,6 +140,12 @@ exports.editMovie = (req, res, next) => {
 	let movieDoc;
 	Movie.findById(movieId)
 	.then(movie => {
+		if(movie.creator._id.toString() !== req.userId.toString()) {
+			const error = new Error("Not authorized!");
+			error.statusCode = 403;
+			return next(error);
+		}
+		
 		movieDoc = movie;
 		movie.title = updatedTitle ?? movie.title;
 		movie.description = updatedDescription ?? movie.description;
