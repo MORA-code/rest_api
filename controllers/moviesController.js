@@ -1,5 +1,6 @@
 const fs = require("fs");
 const mongoose = require("mongoose");
+const { validationResult } = require("express-validator");
 const Movie = require("../models/movie");
 
 exports.getMovies = (req, res, next) => {
@@ -26,7 +27,7 @@ exports.getSingleMovie = (req, res, next) => {
 		if(!movie) {
 			const error = new Error("No movie find with the given id!");
 			error.statusCode = 404;
-			throw error;
+			return next(error);
 		}
 		
 		res.status(200).json({
@@ -41,13 +42,20 @@ exports.getSingleMovie = (req, res, next) => {
 };
 
 exports.createMovie = (req, res, next) => {
-	console.log(req.file);
+	const errors = validationResult(req);
+	if(!errors.isEmpty()) {
+		const error = new Error();
+		error.message = { message: errors.array() };
+		error.statusCode = 422;
+		return next(error);
+	}
+	
 	const { title, description } = req.body;
 	const coverUrl = req.file?.path.replace("\\", "/"); 
 	if(!coverUrl) {
 		const error = new Error("No cover url provided!");
 		error.statusCode = 401;
-		throw error;
+		return next(error);
 	}
 	
 	const movie = new Movie({
@@ -63,7 +71,7 @@ exports.createMovie = (req, res, next) => {
 	.catch(error => {
 		error.message = null;
 		error.statusCode = 500;
-		throw error;
+		return next(error);
 	});
 };
 
@@ -74,7 +82,7 @@ exports.deleteMovie = (req, res, next) => {
 	} catch(error) {
 		error.statusCode = 404;
 		error.message = 'Invalid type of movie id!';
-		throw error;
+		return next(error);
 	}
 	
 	Movie.findById(movieId)
@@ -86,7 +94,6 @@ exports.deleteMovie = (req, res, next) => {
 		}
 		Movie.findByIdAndRemove(movieId)
 		.then(movie => {
-			console.log(movie);
 			res.status(200).json({ message: "Removed successfully!", data: movie._id });
 		})
 	})
@@ -102,6 +109,13 @@ function clearPreviousCover(url) {
 }
 
 exports.editMovie = (req, res, next) => {
+	const errors = validationResult(req);
+	if(!errors.isEmpty()) {
+		const error = new Error({ message: errors.array() });
+		error.statusCode = 422;
+		return next(error);
+	}
+	
 	const movieId = req.params.movieId;
 	const { title: updatedTitle, description: updatedDescription } = req.body;
 	const coverUrl = req.file?.path.replace("\\", "/");
@@ -111,7 +125,7 @@ exports.editMovie = (req, res, next) => {
 	} catch(error) {
 		error.statusCode = 404;
 		error.message = 'Invalid type of movie id!';
-		throw error;
+		return next(error);
 	}
 	
 	let movieDoc;
@@ -134,6 +148,6 @@ exports.editMovie = (req, res, next) => {
 			updatedMovieId: movieDoc._id
 		});
 	}).catch(error => {
-		throw error;
+		next(error);
 	})
-}; 
+};

@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const moviesRoutes = require("./routes/moviesRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use(multer({ storage: storageConfig }).single("coverImage"));
 
 app.use("/movies", moviesRoutes);
+app.use("/auth", authRoutes);
 
 app.use((req, res) => {
 	res.status(404).json({ message: "Route not found!" });
