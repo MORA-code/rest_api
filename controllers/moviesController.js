@@ -27,6 +27,11 @@ exports.getSingleMovie = (req, res, next) => {
 			error.statusCode = 404;
 			throw error;
 		}
+		
+		res.status(200).json({
+			message: "Single movie fetched successfully!",
+			movie: movie
+		});
 	})
 	.catch(error => {
 		error.message = null;
@@ -53,6 +58,36 @@ exports.createMovie = (req, res, next) => {
 	movie.save()
 	.then(result => {
 		res.status(201).json({ message: "Created successfully!", data: result });
+	})
+	.catch(error => {
+		error.message = null;
+		error.statusCode = 500;
+		throw error;
+	});
+};
+
+exports.deleteMovie = (req, res, next) => {
+	const movieId = req.params.movieId;
+	try {
+		new mongoose.Types.ObjectId(movieId);
+	} catch(error) {
+		error.statusCode = 404;
+		error.message = 'Invalid type of movie id!';
+		throw error;
+	}
+	
+	Movie.findById(movieId)
+	.then(movie => {
+		if(!movie) {
+			const error = new Error("Movie with the given id not found!");
+			error.statusCode = 404;
+			return next(error);
+		}
+		Movie.findByIdAndRemove(movieId)
+		.then(movie => {
+			console.log(movie);
+			res.status(200).json({ message: "Removed successfully!", data: movie._id });
+		})
 	})
 	.catch(error => {
 		error.message = null;

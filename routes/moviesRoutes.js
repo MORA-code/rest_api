@@ -7,4 +7,6 @@ router.get("/:movieId", moviesController.getSingleMovie);
 
 router.post("/", moviesController.createMovie);
 
+router.delete("/:movieId", moviesController.deleteMovie);
+
 module.exports = router;
